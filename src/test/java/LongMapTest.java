@@ -17,14 +17,14 @@ public class LongMapTest {
     @Test
     public void putMethodTest(){
         logger.debug("put method test");
-        assertNotNull(longMap.put(44, "cat"));
-        assertNotNull(longMap.put(45, "dog"));
+        assertNotNull(longMap.put(75, "cat"));
+        assertNotNull(longMap.put(76, "dog"));
     }
 
     @Test
     public void getMethodTest(){
         logger.debug("get method test");
-        assertEquals("Nick", longMap.get(1));
+        assertEquals("Nick", longMap.get(31));
     }
 
     @Test
@@ -32,12 +32,30 @@ public class LongMapTest {
         logger.debug("remove method test");
         assertNotNull(longMap.get(31));
         longMap.remove(31);
-        longMap.get(31);
+        assertEquals("Nick", longMap.get(31));
     }
 
     @Test
     public void isEmptyMethodTest(){
         logger.debug("isEmpty method test");
         assertFalse(longMap.isEmpty());
+    }
+
+    @Test
+    public void containsKeyMethodTest(){
+        logger.debug("containsKey method test");
+        assertTrue(longMap.containsKey(31));
+    }
+
+    @Test
+    public void containsValueMethodTest(){
+        logger.debug("containsValue method test");
+        assertTrue(longMap.containsValue("Nick"));
+    }
+
+    @Test
+    public void keysMethodTest(){
+        logger.debug("keys method test");
+        assertArrayEquals(new long [] {31, 33}, longMap.keys());
     }
 }
