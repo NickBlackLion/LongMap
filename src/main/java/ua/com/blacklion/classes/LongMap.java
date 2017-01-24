@@ -8,10 +8,25 @@ import java.lang.reflect.Array;
 public class LongMap<V> implements TestMap<V> {
     private Logger logger = Logger.getLogger(this.getClass());
     private Class<?> kind;
+    private InnerPair [] table;
+    private int maxKeyValue = 1000000;
+    private int tableInitSize = 10000;
+
+    public LongMap() {
+        table = (InnerPair[]) Array.newInstance(InnerPair.class, tableInitSize);
+        logger.debug("Constructor has created. Table size = " + table.length);
+    }
 
     @Override
     public V put(long key, V value) {
-        return null;
+        InnerPair pair = new InnerPair(key, value);
+        logger.debug("Pair is " + pair);
+        logger.debug("Table length is " + table.length);
+
+        long k = keyCheck(key);
+        tableSizeCheck(k);
+
+        return pair.getValue();
     }
 
     @Override
@@ -51,7 +66,7 @@ public class LongMap<V> implements TestMap<V> {
 
     @Override
     public long size() {
-        return 0;
+        return 0L;
     }
 
     @Override
@@ -59,8 +74,69 @@ public class LongMap<V> implements TestMap<V> {
 
     }
 
-    private class InnerPair<V>{
+    private class InnerPair {
         private Long key;
         private V value;
+        private InnerPair next;
+        private boolean deleted;
+
+        public InnerPair(Long key, V value) {
+            this.key = key;
+            this.value = value;
+            this.deleted = false;
+        }
+
+        public Long getKey() {
+            return key;
+        }
+
+        public V getValue() {
+            return value;
+        }
+
+        public InnerPair getNext() {
+            return next;
+        }
+
+        public void setNext(InnerPair next) {
+            this.next = next;
+        }
+
+        public boolean isDeleted(){
+            return deleted;
+        }
+
+        public boolean deletePair(){
+            if (!this.deleted){
+                this.deleted = true;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "Key = " + key + "; value = " + value;
+        }
+    }
+
+    private long keyCheck(long key){
+        Long newKey = key;
+
+        while (newKey > maxKeyValue){
+            newKey /= 2;
+            logger.debug("New key is " + newKey);
+        }
+
+        return newKey;
+    }
+
+    private void tableSizeCheck(long key){
+        if (key > table.length){
+            int k = (int) key * 2;
+            table = (InnerPair[]) Array.newInstance(InnerPair.class, k);
+            logger.debug("New table length is " + table.length);
+        }
     }
 }
