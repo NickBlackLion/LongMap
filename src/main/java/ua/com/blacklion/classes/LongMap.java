@@ -10,7 +10,7 @@ public class LongMap<V> implements TestMap<V> {
     private Class<?> kind;
     private InnerPair [] table;
     private int maxKeyValue = 1000000;
-    private int tableInitSize = 10000;
+    private int tableInitSize = 10;
 
     public LongMap() {
         table = (InnerPair[]) Array.newInstance(InnerPair.class, tableInitSize);
@@ -19,33 +19,58 @@ public class LongMap<V> implements TestMap<V> {
 
     @Override
     public V put(long key, V value) {
-        InnerPair pair = new InnerPair(key, value);
-        logger.debug("Pair is " + pair);
-        logger.debug("Table length is " + table.length);
-
+        logger.debug("Incoming data: key: " + key + " value: " + value);
         long k = keyCheck(key);
+        int index = (int) k;
         tableSizeCheck(k);
 
-        return pair.getValue();
+        try {
+            if (table[index].isDeleted()) {
+                table[index] = new InnerPair(k, value);
+            }
+        } catch (NullPointerException e) {
+            table[index] = new InnerPair(k, value);
+            logger.debug("Set to basket in catch value " + table[index]);
+        }
+
+        return table[index].getValue();
     }
 
     @Override
     public V get(long key) {
-        return null;
+        int index = presentsCheck(key);
+
+        logger.debug("Returned value is " + table[index].getValue());
+        return table[index].getValue();
     }
 
     @Override
     public V remove(long key) {
-        return null;
+        int index = presentsCheck(key);
+
+        table[index].deletePair();
+
+        logger.debug("Deleted value is " + table[index].getValue());
+        return table[index].getValue();
     }
 
     @Override
     public boolean isEmpty() {
-        return false;
+        for (int i = 0; i < table.length - 1; i++){
+            if (table[i] != null){
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override
     public boolean containsKey(long key) {
+        if (key > table.length){
+            return false;
+        }
+
         return false;
     }
 
@@ -77,7 +102,6 @@ public class LongMap<V> implements TestMap<V> {
     private class InnerPair {
         private Long key;
         private V value;
-        private InnerPair next;
         private boolean deleted;
 
         public InnerPair(Long key, V value) {
@@ -92,14 +116,6 @@ public class LongMap<V> implements TestMap<V> {
 
         public V getValue() {
             return value;
-        }
-
-        public InnerPair getNext() {
-            return next;
-        }
-
-        public void setNext(InnerPair next) {
-            this.next = next;
         }
 
         public boolean isDeleted(){
@@ -124,6 +140,11 @@ public class LongMap<V> implements TestMap<V> {
     private long keyCheck(long key){
         Long newKey = key;
 
+        if (newKey < 0){
+            newKey = Math.abs(newKey);
+            logger.debug("Key is positive with value " + newKey);
+        }
+
         while (newKey > maxKeyValue){
             newKey /= 2;
             logger.debug("New key is " + newKey);
@@ -138,5 +159,21 @@ public class LongMap<V> implements TestMap<V> {
             table = (InnerPair[]) Array.newInstance(InnerPair.class, k);
             logger.debug("New table length is " + table.length);
         }
+    }
+
+    private int presentsCheck(long key){
+        logger.debug("Entered key: " + key);
+
+        long k = keyCheck(key);
+        int index = (int) k;
+
+        if (table[index] == null || table[index].isDeleted()){
+            logger.debug("Returned value is empty or deleted");
+            throw new NullPointerException();
+        }
+
+        logger.debug("The index " + index + " is being");
+
+        return index;
     }
 }
