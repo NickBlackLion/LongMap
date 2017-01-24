@@ -58,4 +58,16 @@ public class LongMapTest {
         logger.debug("keys method test");
         assertArrayEquals(new long [] {31, 33}, longMap.keys());
     }
+
+    @Test
+    public void valuesMethodTest(){
+        logger.debug("values method test");
+        assertArrayEquals(new String [] {"Nick", "Lora"}, longMap.values());
+    }
+
+    @Test
+    public void sizeMethodTest(){
+        logger.debug("size method test");
+        assertEquals(2, longMap.size());
+    }
 }

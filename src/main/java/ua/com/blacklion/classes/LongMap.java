@@ -9,9 +9,7 @@ import java.util.Arrays;
 /**Class that implements part of the logic from HashMap class*/
 public class LongMap<V> implements TestMap<V> {
     private Logger logger = Logger.getLogger(this.getClass());
-    private Class<?> kind;
     private InnerPair [] table;
-    private int maxKeyValue = 1000000;
     private int tableInitSize = 10;
 
     public LongMap() {
@@ -22,7 +20,7 @@ public class LongMap<V> implements TestMap<V> {
     @Override
     public V put(long key, V value) {
         logger.debug("Incoming data: key: " + key + " value: " + value);
-        long k = makeNewKey(key);
+        long k = makeAbsoluteKey(key);
         int index = (int) k;
         tableSizeCheck(k);
 
@@ -64,7 +62,6 @@ public class LongMap<V> implements TestMap<V> {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -82,7 +79,7 @@ public class LongMap<V> implements TestMap<V> {
             while (low < height) {
                 int middle = low + (height - low) / 2;
 
-                if (key == middle && makeNewKey(key) == presentsCheck(key)) {
+                if (key == middle && makeAbsoluteKey(key) == presentsCheck(key)) {
                     logger.debug("in key == middle && makeNewKey(key) == presentsCheck(key) return true");
                     return true;
                 }
@@ -135,11 +132,25 @@ public class LongMap<V> implements TestMap<V> {
         return keys;
     }
 
-
-    //TODO Not ended
     @Override
     public V[] values() {
-        return (V[]) Array.newInstance(kind);
+        InnerPair [] tempValues = (InnerPair []) Array.newInstance(InnerPair.class, table.length);
+        int counter = 0;
+
+        for (InnerPair ip: table){
+            if (ip != null && !ip.isDeleted()) {
+                tempValues[counter] = ip;
+                counter++;
+            }
+        }
+
+        V [] values = (V[]) Array.newInstance(tempValues[0].getValue().getClass(), counter);
+
+        for (int i = 0; i < values.length; i++){
+            values[i] = tempValues[i].getValue();
+        }
+
+        return values;
     }
 
     @Override
@@ -160,6 +171,7 @@ public class LongMap<V> implements TestMap<V> {
         table = (InnerPair[]) Array.newInstance(InnerPair.class, 10);
     }
 
+    //Inner class that making pair for embedded basket
     private class InnerPair {
         private Long key;
         private V value;
@@ -198,7 +210,8 @@ public class LongMap<V> implements TestMap<V> {
         }
     }
 
-    private long makeNewKey(long key){
+    //Checking if a key value is negative, making it absolute
+    private long makeAbsoluteKey(long key){
         Long newKey = key;
 
         if (newKey < 0){
@@ -209,29 +222,25 @@ public class LongMap<V> implements TestMap<V> {
         return newKey;
     }
 
+    /*If entered key is bigger than basket size
+    * makes basket size twice bigger but not bigger
+    * than Integer.MAX_VALUE*/
     private void tableSizeCheck(long key){
-        InnerPair [] tempTable;
-
         if (key > table.length && key < Integer.MAX_VALUE / 2){
             int k = (int) key * 2;
-            tempTable = table;
-            logger.debug("tempTable size is " + tempTable.length);
-            table = Arrays.copyOf(tempTable, k);
-            logger.debug("New table length is " + table.length);
+            copyMainTable(k);
         }
-        /*
-        if (key > table.length && table.length && key > Integer.MAX_VALUE / 2){
-            int k = (int) key * 2;
-            table = (InnerPair[]) Array.newInstance(InnerPair.class, k);
-            logger.debug("New table length is " + table.length);
+        if (key > table.length && key > Integer.MAX_VALUE / 2){
+            int k = Integer.MAX_VALUE;
+            copyMainTable(k);
         }
-        */
     }
 
+    //Checking if a value of actual key is being
     private int presentsCheck(long key){
         logger.debug("Entered key: " + key);
 
-        int index = (int) makeNewKey(key);
+        int index = (int) makeAbsoluteKey(key);
 
         if (table[index] == null || table[index].isDeleted()){
             logger.debug("Returned value is empty or deleted");
@@ -241,5 +250,13 @@ public class LongMap<V> implements TestMap<V> {
         logger.debug("The index " + index + " is being");
 
         return index;
+    }
+
+    //Copy current basket in a bigger basket
+    private void copyMainTable(int size){
+        InnerPair [] tempTable = table;
+        logger.debug("tempTable size is " + tempTable.length);
+        table = Arrays.copyOf(tempTable, size);
+        logger.debug("New table length is " + table.length);
     }
 }
