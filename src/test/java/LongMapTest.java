@@ -11,9 +11,9 @@ public class LongMapTest {
     @Before
     public void init(){
         longMap = new LongMap<>();
-        longMap.put(31, "Nick");
-        longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 31, "some1");
         longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 37, "some2");
+        longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 31, "some1");
+        longMap.put(31, "Nick");
         longMap.put(33, "Lora");
         longMap.put(2, "some3");
     }
@@ -82,20 +82,23 @@ public class LongMapTest {
     public void keysMethodTest(){
         System.out.println("\n");
         logger.debug("test");
-        assertArrayEquals(new long [] {31, 33}, longMap.keys());
+        assertArrayEquals(new long [] {2, 31, 33,
+                        (long) (Integer.MAX_VALUE / 8) * 2 + 31,
+                        (long) (Integer.MAX_VALUE / 8) * 2 + 37},
+                longMap.keys());
     }
 
     @Test
     public void valuesMethodTest(){
         System.out.println("\n");
         logger.debug("test");
-        assertArrayEquals(new String [] {"Nick", "Lora"}, longMap.values());
+        assertArrayEquals(new String [] {"Lora", "Nick", "some1", "some2", "some3"}, longMap.values());
     }
 
     @Test
     public void sizeMethodTest(){
         System.out.println("\n");
         logger.debug("test");
-        assertEquals(2, longMap.size());
+        assertEquals(5, longMap.size());
     }
 }

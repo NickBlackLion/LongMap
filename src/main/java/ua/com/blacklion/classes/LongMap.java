@@ -12,6 +12,7 @@ public class LongMap<V> implements TestMap<V> {
     private InnerPair[] table;
     private int multipleOfArray = Integer.MAX_VALUE / 8;
     private int tableInitSize = 10;
+    private Class<?> kind;
 
     public LongMap() {
         table = (InnerPair[]) Array.newInstance(InnerPair.class, tableInitSize);
@@ -181,54 +182,64 @@ public class LongMap<V> implements TestMap<V> {
 
     @Override
     public long[] keys() {
-        long[] tempKeys = new long[table.length];
-        long[] keys;
-        int counter = 0;
+        int counter = amountOfObjects();
 
-        for (InnerPair aTable : table) {
-            if (aTable != null && !aTable.isDeleted()) {
-                tempKeys[counter] = aTable.getKey();
-                counter++;
+        logger.debug("Amount of founded keys are " + counter);
+        long[] keys = new long[counter];
+
+        counter = 0;
+
+        for (InnerPair ip: table) {
+            if (ip != null && !ip.isDeleted()) {
+                keys[counter++] = ip.getKey();
+            }
+
+            for (InnerPair innerPair = ip; innerPair != null; innerPair = innerPair.getNext()) {
+                if (innerPair.getNext() != null && !ip.getNext().isDeleted()) {
+                    keys[counter++] = innerPair.getNext().getKey();
+                }
             }
         }
 
-        logger.debug("counter " + counter);
-        keys = Arrays.copyOf(tempKeys, counter);
-
+        logger.debug("Before sorting " + printArray(keys));
+        Arrays.sort(keys);
+        logger.debug("After sorting " + printArray(keys));
         return keys;
     }
 
     @Override
     public V[] values() {
-        InnerPair[] tempValues = (InnerPair[]) Array.newInstance(InnerPair.class, table.length);
-        int counter = 0;
+        int counter = amountOfObjects();
+
+        if (counter == 0) {
+            return null;
+        }
+
+        V[] values = (V[]) Array.newInstance(kind, counter);
+
+        counter = 0;
 
         for (InnerPair ip: table) {
             if (ip != null && !ip.isDeleted()) {
-                tempValues[counter] = ip;
-                counter++;
+                values[counter++] = ip.getValue();
+            }
+
+            for (InnerPair innerPair = ip; innerPair != null; innerPair = innerPair.getNext()) {
+                if (innerPair.getNext() != null && !ip.getNext().isDeleted()) {
+                    values[counter++] = innerPair.getNext().getValue();
+                }
             }
         }
 
-        V[] values = (V[]) Array.newInstance(tempValues[0].getValue().getClass(), counter);
-
-        for (int i = 0; i < values.length; i++) {
-            values[i] = tempValues[i].getValue();
-        }
-
+        logger.debug("Before sorting " + printArray(values));
+        Arrays.sort(values);
+        logger.debug("After sorting " + printArray(values));
         return values;
     }
 
     @Override
     public long size() {
-        int counter = 0;
-
-        for (InnerPair aTable : table) {
-            if (aTable != null && !aTable.isDeleted()) {
-                counter++;
-            }
-        }
-
+        int counter = amountOfObjects();
         return counter;
     }
 
@@ -352,5 +363,62 @@ public class LongMap<V> implements TestMap<V> {
         logger.debug("tempTable size is " + tempTable.length);
         table = Arrays.copyOf(tempTable, size);
         logger.debug("New table length is " + table.length);
+    }
+
+    private String printArray(long[] array) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (int i = 0; i < array.length; i++) {
+            if (i == 0) {
+                stringBuilder.append("[" + array[i]);
+            } else if (i != array.length - 1) {
+                stringBuilder.append(", " + array[i]);
+            } else {
+                stringBuilder.append(", " + array[i] + "]");
+            }
+        }
+
+        return stringBuilder.toString();
+    }
+
+    private String printArray(V[] array) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (int i = 0; i < array.length; i++) {
+            if (i == 0) {
+                stringBuilder.append("[" + array[i]);
+            } else if (i != array.length - 1) {
+                stringBuilder.append(", " + array[i]);
+            } else {
+                stringBuilder.append(", " + array[i] + "]");
+            }
+        }
+
+        return stringBuilder.toString();
+    }
+
+    private int amountOfObjects() {
+        logger.debug("Counting amount of objects in map");
+        int counter = 0;
+        boolean flag = false;
+
+        for (InnerPair ip: table) {
+            if (ip != null && !ip.isDeleted()) {
+                counter++;
+                if (!flag) {
+                    kind = ip.getValue().getClass();
+                    flag = true;
+                }
+            }
+
+            for (InnerPair innerPair = ip; innerPair != null; innerPair = innerPair.getNext()) {
+                if (innerPair.getNext() != null && !ip.getNext().isDeleted()) {
+                    counter++;
+                }
+            }
+        }
+
+        logger.debug("Amount of objects is " + counter);
+        return counter;
     }
 }
