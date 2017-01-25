@@ -11,11 +11,11 @@ public class LongMap<V> implements TestMap<V> {
     private Logger logger = Logger.getLogger(this.getClass());
     private InnerPair[] table;
     private int multipleOfArray = Integer.MAX_VALUE / 8;
+    private int tableInitSize = 10;
 
     public LongMap() {
-        int tableInitSize = 10;
         table = (InnerPair[]) Array.newInstance(InnerPair.class, tableInitSize);
-        logger.debug("Constructor has created. Table size = " + table.length);
+        logger.debug("Constructor was created. Table size = " + table.length);
     }
 
     @Override
@@ -26,67 +26,53 @@ public class LongMap<V> implements TestMap<V> {
         tableSizeCheck(k);
 
         try {
-            if (key > multipleOfArray && table[index] != null && !table[index].isDeleted()) {
-                for(InnerPair ip = table[index]; ip != null; ip = ip.getNext()) {
-                    if (ip.getNext() == null || ip.getNext().isDeleted()){
+            if (table[index].isDeleted() || table[index].getKey() == key) {
+                table[index] = new InnerPair(key, value);
+                logger.debug("Created value in basket " + table[index]);
+            } else {
+                for (InnerPair ip = table[index]; ip != null; ip = ip.getNext()) {
+                    if (ip.getNext() == null || ip.getNext().isDeleted()
+                            || ip.getNext().getKey() == key) {
                         ip.setNext(new InnerPair(key, value));
-                        logger.debug("Next linked value is " + ip.getNext());
+                        logger.debug("Next created linked value is " + ip.getNext());
                         break;
                     }
                 }
-            } else {
-                if (table[index].isDeleted()) {
-                    table[index] = new InnerPair(key, value);
-                    logger.debug("Created value in basket " + table[index]);
-                }
             }
+
+            InnerPair ip = table[index];
+            while (ip != null) {
+               logger.debug("ip is " + ip + ". Index of basket is " + index);
+                ip = ip.getNext();
+            }
+
         } catch (NullPointerException e) {
-            table[index] = new InnerPair(k, value);
+            table[index] = new InnerPair(key, value);
             logger.debug("Caught NullPointerException."
                     + "Created value in basket " + table[index]);
         }
 
-        return table[index].getValue();
+        return null;
     }
 
     @Override
     public V get(long key) {
-        int index = presentsCheck(key);
-        V value;
-
-        if (key > Integer.MAX_VALUE) {
-            value = table[index].getNext().getValue();
-
-            for(InnerPair ip = table[index]; ip != null; ip = ip.getNext()) {
-                if (ip.getNext() == null || ip.getNext().isDeleted()){
-                    ip.setNext(new InnerPair(key, value));
-                    logger.debug("Next linked value is " + ip.getNext());
-                    break;
-                }
-            }
-
-            logger.debug("Returned value is \""
-                    + table[index].getNext().getValue()
-                    + "\" with key " + table[index].getNext().getKey());
-        } else {
-            value = table[index].getValue();
-            logger.debug("Returned value is " + table[index].getValue());
-        }
-
-        return value;
+        logger.debug("Key for getting value is " + key);
+        return presentsCheck(key);
     }
 
     @Override
     public V remove(long key) {
-        int index = presentsCheck(key);
-        V value;
+        logger.debug("Key for removing value is " + key);
 
-        if (key > Integer.MAX_VALUE) {
-            value = table[index].getNext().getValue();
-            table[index].getNext().deletePair();
-        } else {
-            value = table[index].getValue();
-            table[index].deletePair();
+        V value = presentsCheck(key);
+        int index = (int) makeNewKey(key);
+
+        for (InnerPair ip = table[index]; ip != null; ip = ip.getNext()) {
+            if (ip.getKey() == key) {
+                ip.deletePair();
+                logger.debug("Deleted value is " + value);
+            }
         }
 
         logger.debug("Deleted value is " + value);
@@ -96,67 +82,100 @@ public class LongMap<V> implements TestMap<V> {
     @Override
     public boolean isEmpty() {
         for (InnerPair ip: table) {
-            if (ip == null || ip.isDeleted()) {
-                if (ip.getNext() != null && !ip.getNext().isDeleted()) return false;
+            if (ip != null && !ip.isDeleted()) {
+                logger.debug("Map is not empty");
+                return false;
+            } else {
+                for (InnerPair inner = ip; inner != null; inner = inner.getNext()) {
+                    if (ip.getNext() != null && !ip.getNext().isDeleted()) {
+                        logger.debug("Map is not empty");
+                        return false;
+                    }
+                }
             }
-
-            if (ip != null && !ip.isDeleted()) return false;
         }
 
+        logger.debug("Map is empty");
         return true;
     }
 
     @Override
     public boolean containsKey(long key) {
-        if (key > table.length) {
-            logger.debug("in key > table.length return false");
-            return false;
-        }
-
+        logger.debug("searching key is " + key);
         int low = 0;
         int height = table.length;
+
+        int index = (int) makeNewKey(key);
 
         try {
             while (low < height) {
                 int middle = low + (height - low) / 2;
+                logger.debug("index is " + index
+                        + "; middle is " + middle
+                        + "; height is " + height
+                        + "; low is " + low);
 
-                if (key == middle && makeNewKey(key) == presentsCheck(key)) {
-                    logger.debug("in key == middle && makeNewKey(key) "
-                            + "== presentsCheck(key) return true");
-                    return true;
+                if (index == middle) {
+                    for (InnerPair ip: table) {
+                        if (ip != null && ip.getKey() == key) {
+                            logger.debug("founded key is " + key);
+                            return true;
+                        } else {
+                            for (InnerPair inner = ip; inner != null; inner = inner.getNext()) {
+                                if (ip.getNext() != null && ip.getNext().getKey() == key) {
+                                    logger.debug("founded key is " + key);
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+
+                    logger.debug("Key is not founded");
+                    return false;
                 }
 
-                if (key < middle) {
+                if (index < middle) {
                     logger.debug("in key < middle: middle is " + middle
                             + "; height is " + height
                             + "; low is " + low);
-                    height = middle - 1;
+                    height = middle;
                 }
 
-                if (middle < key) {
+                if (middle < index) {
                     logger.debug("in middle < key: middle is " + middle
                             + "; height is " + height
                             + "; low is " + low);
-                    low = middle + 1;
+                    low = middle;
                 }
             }
         } catch (NullPointerException e) {
-            logger.debug("in NullPointerException return false");
+            logger.debug("Key is not founded in NullPointerException");
             return false;
         }
 
-        logger.debug("in the end return false");
+        logger.debug("Key is not founded");
         return false;
     }
 
     @Override
     public boolean containsValue(V value) {
-        for (InnerPair aTable: table) {
-            if (aTable != null && !aTable.isDeleted()
-                    && aTable.getValue().equals(value)) {
+        logger.debug("searching value is " + value);
+        for (InnerPair ip: table) {
+            if (ip != null && !ip.isDeleted() && ip.getValue().equals(value)) {
+                logger.debug("founded value is " + value);
                 return true;
+            } else {
+                for (InnerPair inner = ip; inner != null; inner = inner.getNext()) {
+                    if (ip.getNext() != null && !ip.getNext().isDeleted()
+                            && ip.getNext().getValue().equals(value)) {
+                        logger.debug("founded value is " + value);
+                        return true;
+                    }
+                }
             }
         }
+
+        logger.debug("Value is not founded");
         return false;
     }
 
@@ -215,7 +234,8 @@ public class LongMap<V> implements TestMap<V> {
 
     @Override
     public void clear() {
-        table = (InnerPair[]) Array.newInstance(InnerPair.class, 10);
+        logger.debug("Cleaning map");
+        table = (InnerPair[]) Array.newInstance(InnerPair.class, tableInitSize);
     }
 
     //Inner class that making pair for embedded basket
@@ -277,7 +297,8 @@ public class LongMap<V> implements TestMap<V> {
 
         while (newKey > multipleOfArray) {
             newKey -= multipleOfArray;
-            logger.debug("Key made from value bigger then multipleOfArray is " + newKey);
+            logger.debug("Key made from value bigger"
+                    + "then multipleOfArray is " + newKey);
         }
 
         return newKey;
@@ -298,27 +319,31 @@ public class LongMap<V> implements TestMap<V> {
     }
 
     //Checking if a value of actual key is being
-    private int presentsCheck(long key) {
+    private V presentsCheck(long key) {
         logger.debug("Entered key: " + key);
+        V value = null;
 
         int index = (int) makeNewKey(key);
+        boolean isPresentFlag = false;
 
-        if (key > multipleOfArray && table[index] != null || !table[index].isDeleted()) {
-            for(InnerPair ip = table[index]; ip != null; ip = ip.getNext()) {
-                if (ip.getNext() != null && !ip.getNext().isDeleted() && ip.getNext().getKey() == key){
-                    throw new NullPointerException();
-                }
+        for (InnerPair ip = table[index]; ip != null; ip = ip.getNext()) {
+            if (ip.getKey() == key) {
+                value = ip.getValue();
+                isPresentFlag = true;
+                logger.debug("Key " + key + " is present with value \'" + value + "\'");
             }
-        } else {
-            if (table[index] == null || table[index].isDeleted()) {
-                logger.debug("Returned value is empty or deleted");
-                throw new NullPointerException();
+
+            if (ip.isDeleted()) {
+                isPresentFlag = false;
             }
         }
 
-        logger.debug("The index " + index + " is being");
+        if (!isPresentFlag) {
+            logger.debug("Key " + key + " is absent or deleted");
+            throw new NullPointerException();
+        }
 
-        return index;
+        return value;
     }
 
     //Copy current basket in a bigger basket
