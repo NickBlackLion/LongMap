@@ -22,11 +22,11 @@ public class LongMapTest {
     public void putMethodTest(){
         System.out.println("\n");
         logger.debug("test");
-        assertNotNull(longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 2, "byaka"));
-        assertNotNull(longMap.put(2, "some"));
-        assertNotNull(longMap.put((long) (Integer.MAX_VALUE / 8) + 2, "cat"));
-        assertNotNull(longMap.put(76, "dog"));
-        assertNotNull(longMap.put(31, "Baka-baka"));
+        assertNull(longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 2, "byaka"));
+        assertNull(longMap.put(2, "some"));
+        assertNull(longMap.put((long) (Integer.MAX_VALUE / 8) + 2, "cat"));
+        assertNull(longMap.put(76, "dog"));
+        assertNull(longMap.put(31, "Baka-baka"));
     }
 
     @Test
@@ -35,7 +35,7 @@ public class LongMapTest {
         logger.debug("test");
 
         assertEquals("Nick", longMap.get(31));
-        assertEquals("some", longMap.get((long) (Integer.MAX_VALUE / 8) * 2 + 31));
+        assertEquals("some1", longMap.get((long) (Integer.MAX_VALUE / 8) * 2 + 31));
     }
 
     @Test
@@ -43,10 +43,8 @@ public class LongMapTest {
         System.out.println("\n");
         logger.debug("test");
         assertEquals("Nick", longMap.get(31));
-        assertEquals("some", longMap.get((long) (Integer.MAX_VALUE / 8) * 2 + 31));
+        assertEquals("some1", longMap.get((long) (Integer.MAX_VALUE / 8) * 2 + 31));
         logger.debug("Removed " + longMap.remove(31));
-        assertEquals("some", longMap.get((long) (Integer.MAX_VALUE / 8) * 2 + 31));
-        assertEquals("Nick", longMap.get(31));
     }
 
     @Test
@@ -54,10 +52,8 @@ public class LongMapTest {
         System.out.println("\n");
         logger.debug("test");
         assertFalse(longMap.isEmpty());
-        longMap.remove(31);
-        longMap.remove((long) (Integer.MAX_VALUE / 8) * 2 + 31);
-        longMap.remove(33);
-        assertFalse(longMap.isEmpty());
+        longMap.clear();
+        assertTrue(longMap.isEmpty());
     }
 
     @Test
