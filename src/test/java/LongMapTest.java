@@ -12,11 +12,11 @@ public class LongMapTest {
     public void init(){
         System.out.println("\n");
         longMap = new LongMap<>();
+        longMap.put(2, "some3");
         longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 37, "some2");
         longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 31, "some1");
         longMap.put(31, "Nick");
         longMap.put(33, "Lora");
-        longMap.put(2, "some3");
     }
 
     @Test
@@ -40,6 +40,11 @@ public class LongMapTest {
 
         assertEquals("Nick", longMap.get(31));
         assertEquals("some1", longMap.get((long) (Integer.MAX_VALUE / 8) * 2 + 31));
+        try {
+            longMap.get(22);
+        } catch (NullPointerException e) {
+            logger.debug("Value for key is not found");
+        }
     }
 
     @Test
@@ -47,8 +52,6 @@ public class LongMapTest {
         System.out.println("\n");
         logger.debug("test");
         assertEquals("Nick", longMap.get(31));
-        assertEquals("some1", longMap.get((long) (Integer.MAX_VALUE / 8) * 2 + 31));
-        assertEquals("Lora", longMap.get(33));
         logger.debug("Removed " + longMap.remove(31));
         try {
             logger.debug("Removed " + longMap.remove(22));
@@ -89,7 +92,6 @@ public class LongMapTest {
         assertTrue(longMap.containsValue("some1"));
         assertTrue(longMap.containsValue("some3"));
         assertFalse(longMap.containsValue("bird"));
-
     }
 
     @Test
