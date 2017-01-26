@@ -10,8 +10,8 @@ import java.util.Arrays;
 public class LongMap<V> implements TestMap<V> {
     private Logger logger = Logger.getLogger(this.getClass());
     private InnerPair[] table;
-    private int multipleOfArray = Integer.MAX_VALUE / 8;
-    private int tableInitSize = 10;
+    private final int multipleOfArray = Integer.MAX_VALUE / 8;
+    private final int tableInitSize = 10;
     private Class<?> kind;
 
     public LongMap() {
@@ -28,14 +28,17 @@ public class LongMap<V> implements TestMap<V> {
 
         try {
             if (table[index].isDeleted() || table[index].getKey() == key) {
-                table[index] = new InnerPair(key, value);
-                logger.debug("Created value in basket " + table[index]);
+                table[index].setNewInnerPair(new InnerPair(key, value));
+                logger.debug("Set value in basket " + table[index]);
             } else {
                 for (InnerPair ip = table[index]; ip != null; ip = ip.getNext()) {
-                    if (ip.getNext() == null || ip.getNext().isDeleted()
-                            || ip.getNext().getKey() == key) {
+                    if (ip.getNext() == null) {
                         ip.setNext(new InnerPair(key, value));
                         logger.debug("Next created linked value is " + ip.getNext());
+                        break;
+                    } else if (ip.getNext().isDeleted() || ip.getNext().getKey() == key) {
+                        ip.getNext().setNewInnerPair(new InnerPair(key, value));
+                        logger.debug("Next changed linked value is " + ip.getNext());
                         break;
                     }
                 }
@@ -72,7 +75,6 @@ public class LongMap<V> implements TestMap<V> {
         for (InnerPair ip = table[index]; ip != null; ip = ip.getNext()) {
             if (ip.getKey() == key) {
                 ip.deletePair();
-                logger.debug("Deleted value is " + value);
             }
         }
 
@@ -82,19 +84,7 @@ public class LongMap<V> implements TestMap<V> {
 
     @Override
     public boolean isEmpty() {
-        for (InnerPair ip: table) {
-            if (ip != null && !ip.isDeleted()) {
-                logger.debug("Map is not empty");
-                return false;
-            } else {
-                for (InnerPair inner = ip; inner != null; inner = inner.getNext()) {
-                    if (ip.getNext() != null && !ip.getNext().isDeleted()) {
-                        logger.debug("Map is not empty");
-                        return false;
-                    }
-                }
-            }
-        }
+        if (amountOfObjects() > 0) return false;
 
         logger.debug("Map is empty");
         return true;
@@ -250,6 +240,7 @@ public class LongMap<V> implements TestMap<V> {
     }
 
     //Inner class that making pair for embedded basket
+    //Works like LinkedList
     private class InnerPair {
         private Long key;
         private V value;
@@ -291,13 +282,19 @@ public class LongMap<V> implements TestMap<V> {
             this.next = next;
         }
 
+        public void setNewInnerPair(InnerPair innerPair) {
+            this.key = innerPair.getKey();
+            this.value = innerPair.getValue();
+        }
+
         @Override
         public String toString() {
             return "Key = " + key + "; value = " + value;
         }
     }
 
-    //Checking if a key value is negative, making it absolute
+    /*Check if a key value is negative, making it absolute
+    * or if key value bigger then final computed value*/
     private long makeNewKey(long key) {
         Long newKey = key;
 
@@ -309,7 +306,7 @@ public class LongMap<V> implements TestMap<V> {
         while (newKey > multipleOfArray) {
             newKey -= multipleOfArray;
             logger.debug("Key made from value bigger"
-                    + "then multipleOfArray is " + newKey);
+                    + " then multipleOfArray. New key value is " + newKey);
         }
 
         return newKey;
@@ -329,7 +326,7 @@ public class LongMap<V> implements TestMap<V> {
         }
     }
 
-    //Checking if a value of actual key is being
+    //Check if an object of actual key is being
     private V presentsCheck(long key) {
         logger.debug("Entered key: " + key);
         V value = null;
@@ -338,14 +335,10 @@ public class LongMap<V> implements TestMap<V> {
         boolean isPresentFlag = false;
 
         for (InnerPair ip = table[index]; ip != null; ip = ip.getNext()) {
-            if (ip.getKey() == key) {
+            if (ip.getKey() == key && !ip.isDeleted()) {
                 value = ip.getValue();
                 isPresentFlag = true;
-                logger.debug("Key " + key + " is present with value \'" + value + "\'");
-            }
-
-            if (ip.isDeleted()) {
-                isPresentFlag = false;
+                logger.debug("Key " + key + " is presented with value \'" + value + "\'");
             }
         }
 
@@ -397,6 +390,7 @@ public class LongMap<V> implements TestMap<V> {
         return stringBuilder.toString();
     }
 
+    //Count amount of objects in map
     private int amountOfObjects() {
         logger.debug("Counting amount of objects in map");
         int counter = 0;

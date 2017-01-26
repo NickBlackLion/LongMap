@@ -10,6 +10,7 @@ public class LongMapTest {
 
     @Before
     public void init(){
+        System.out.println("\n");
         longMap = new LongMap<>();
         longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 37, "some2");
         longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 31, "some1");
@@ -22,11 +23,14 @@ public class LongMapTest {
     public void putMethodTest(){
         System.out.println("\n");
         logger.debug("test");
-        assertNull(longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 2, "byaka"));
+        assertNull(longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 2, "rat"));
         assertNull(longMap.put(2, "some"));
         assertNull(longMap.put((long) (Integer.MAX_VALUE / 8) + 2, "cat"));
         assertNull(longMap.put(76, "dog"));
-        assertNull(longMap.put(31, "Baka-baka"));
+        assertNull(longMap.put(31, "hamster"));
+        assertNull(longMap.put((long) (Integer.MAX_VALUE / 8) * 3 + 37, "cow"));
+        assertNull(longMap.put((long) (Integer.MAX_VALUE / 8) * 2 + 37, "bird"));
+        assertNull(longMap.put((long) (Integer.MAX_VALUE / 8) * 3 + 37, "pig"));
     }
 
     @Test
@@ -44,7 +48,13 @@ public class LongMapTest {
         logger.debug("test");
         assertEquals("Nick", longMap.get(31));
         assertEquals("some1", longMap.get((long) (Integer.MAX_VALUE / 8) * 2 + 31));
+        assertEquals("Lora", longMap.get(33));
         logger.debug("Removed " + longMap.remove(31));
+        try {
+            logger.debug("Removed " + longMap.remove(22));
+        } catch (NullPointerException e) {
+            logger.debug("key for delete is not found");
+        }
     }
 
     @Test
@@ -53,6 +63,12 @@ public class LongMapTest {
         logger.debug("test");
         assertFalse(longMap.isEmpty());
         longMap.clear();
+        assertTrue(longMap.isEmpty());
+        longMap.put(31, "Nick");
+        longMap.put(33, "Lora");
+        assertFalse(longMap.isEmpty());
+        longMap.remove(31);
+        longMap.remove(33);
         assertTrue(longMap.isEmpty());
     }
 
@@ -63,6 +79,7 @@ public class LongMapTest {
         assertTrue(longMap.containsKey((long) (Integer.MAX_VALUE / 8) * 2 + 37));
         assertTrue(longMap.containsKey((long) (Integer.MAX_VALUE / 8) * 2 + 31));
         assertTrue(longMap.containsKey(2));
+        assertFalse(longMap.containsKey(22));
     }
 
     @Test
@@ -71,6 +88,7 @@ public class LongMapTest {
         logger.debug("test");
         assertTrue(longMap.containsValue("some1"));
         assertTrue(longMap.containsValue("some3"));
+        assertFalse(longMap.containsValue("bird"));
 
     }
 
@@ -96,5 +114,7 @@ public class LongMapTest {
         System.out.println("\n");
         logger.debug("test");
         assertEquals(5, longMap.size());
+        longMap.remove(31);
+        assertEquals(4, longMap.size());
     }
 }
